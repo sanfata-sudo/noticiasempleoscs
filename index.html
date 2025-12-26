@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EMPLEO SCS - Gestión de Noticias de Empleo</title>
+    <title>EMPLEO SCS - Gestión de Noticias de Empleo (Gratuito)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -25,7 +25,6 @@
             background: rgba(30, 41, 59, 0.7);
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
-        .paywall-blur { filter: blur(4px); pointer-events: none; user-select: none; }
         .loader { border-top-color: var(--scs-blue); animation: spinner 0.6s linear infinite; }
         @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
@@ -67,18 +66,6 @@
                     <button onclick="toggleSidebar()" class="lg:hidden text-gray-500 hover:text-blue-600">
                         <i class="fas fa-times text-xl"></i>
                     </button>
-                </div>
-
-                <!-- User Status / Daily Counter -->
-                <div id="user-status-card" class="mb-6 p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-xs font-semibold text-blue-700 dark:text-blue-300">Consultas hoy:</span>
-                        <span id="daily-counter" class="text-xs font-bold px-2 py-0.5 bg-blue-600 text-white rounded-full">0/1</span>
-                    </div>
-                    <div class="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-1.5">
-                        <div id="counter-progress" class="bg-blue-600 h-1.5 rounded-full transition-all" style="width: 0%"></div>
-                    </div>
-                    <button onclick="showSubscriptionModal()" class="mt-3 w-full text-[10px] py-2 bg-white dark:bg-slate-800 text-blue-600 border border-blue-200 dark:border-blue-700 rounded-lg font-bold hover:bg-blue-600 hover:text-white transition-all uppercase tracking-tighter">Pasar a Pro (Ilimitado)</button>
                 </div>
 
                 <!-- Main Menu -->
@@ -156,10 +143,10 @@
                         <p id="view-desc" class="text-gray-500 dark:text-gray-400 mt-1">Sincronización en tiempo real con el BOC y Portal SCS.</p>
                     </div>
                     
-                    <!-- New Subscribe Button (Specific to current category) -->
+                    <!-- Subscribe Button (Specific to current category) -->
                     <button onclick="showSpecificSubscribeModal()" id="subscribe-category-btn" class="flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition-all whitespace-nowrap">
                         <i class="fas fa-bell"></i> 
-                        <span id="subscribe-btn-text">Suscribirse a NOTICIAS</span>
+                        <span id="subscribe-btn-text">Recibir avisos NOTICIAS</span>
                     </button>
                 </div>
             </header>
@@ -175,76 +162,16 @@
             <div id="posts-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                 <!-- Injected via JS -->
             </div>
-
-            <!-- Paywall Overlay -->
-            <div id="paywall-container" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
-                <div class="bg-white dark:bg-slate-900 max-w-lg w-full rounded-3xl p-10 shadow-2xl text-center border border-blue-100 dark:border-slate-800">
-                    <div class="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">
-                        <i class="fas fa-lock"></i>
-                    </div>
-                    <h3 class="text-2xl font-black mb-2">Límite Diario Alcanzado</h3>
-                    <p class="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">Has agotado tu consulta gratuita de hoy. Suscríbete para acceder a todo el contenido de forma ilimitada y recibir alertas instantáneas.</p>
-                    <div class="space-y-3">
-                        <button onclick="showSubscriptionModal()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/30">VER PLANES DE SUSCRIPCIÓN</button>
-                        <button onclick="closePaywall()" class="w-full py-4 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-400 rounded-2xl font-bold hover:bg-gray-200 transition-all">VOLVER AL LISTADO</button>
-                    </div>
-                </div>
-            </div>
         </main>
     </div>
 
-    <!-- SUBSCRIPTION MODAL (GENERAL) -->
-    <div id="subscription-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-900 w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row">
-            <div class="md:w-1/2 p-10 bg-gradient-to-br from-blue-700 to-blue-900 text-white">
-                <h3 class="text-3xl font-black mb-6">Únete a la versión Pro</h3>
-                <ul class="space-y-4 mb-10 text-blue-100">
-                    <li class="flex items-center gap-3"><i class="fas fa-check-circle text-blue-400"></i> Consultas ilimitadas 24/7</li>
-                    <li class="flex items-center gap-3"><i class="fas fa-check-circle text-blue-400"></i> Alertas email instantáneas</li>
-                    <li class="flex items-center gap-3"><i class="fas fa-check-circle text-blue-400"></i> Resúmenes IA (Gemini)</li>
-                    <li class="flex items-center gap-3"><i class="fas fa-check-circle text-blue-400"></i> Descarga directa de archivos</li>
-                    <li class="flex items-center gap-3"><i class="fas fa-check-circle text-blue-400"></i> Sin publicidad</li>
-                </ul>
-                <div class="bg-white/10 p-6 rounded-2xl border border-white/10">
-                    <p class="text-sm italic">"Desde que uso el plan Pro, no se me escapa ninguna lista supletoria. ¡Muy recomendable!"</p>
-                    <p class="mt-3 font-bold text-xs opacity-75">— María G., Enfermera SCS</p>
-                </div>
-            </div>
-            <div class="md:w-1/2 p-10 bg-white dark:bg-slate-900">
-                <div class="flex justify-end mb-4">
-                    <button onclick="hideSubscriptionModal()" class="text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
-                </div>
-                <div class="grid gap-4">
-                    <div class="border-2 border-gray-100 dark:border-slate-800 p-6 rounded-3xl hover:border-blue-500 transition-all cursor-pointer group">
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="font-bold text-lg">Plan Mensual</span>
-                            <span class="text-blue-600 font-black text-xl">1,99€</span>
-                        </div>
-                        <p class="text-xs text-gray-500">Facturación cada mes. Cancela cuando quieras.</p>
-                        <button onclick="checkout('mensual')" class="mt-4 w-full py-2 bg-gray-900 dark:bg-blue-600 text-white rounded-xl text-sm font-bold group-hover:bg-blue-600">Elegir Mensual</button>
-                    </div>
-                    <div class="border-2 border-blue-500 p-6 rounded-3xl bg-blue-50/50 dark:bg-blue-900/10 relative overflow-hidden">
-                        <div class="absolute top-0 right-0 bg-blue-600 text-white px-3 py-1 text-[10px] font-black rounded-bl-xl uppercase">Más Ahorro (-16%)</div>
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="font-bold text-lg">Plan Anual</span>
-                            <span class="text-blue-600 font-black text-xl">19,99€</span>
-                        </div>
-                        <p class="text-xs text-gray-500">Un solo pago al año. Acceso total.</p>
-                        <button onclick="checkout('anual')" class="mt-4 w-full py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700">Elegir Anual</button>
-                    </div>
-                </div>
-                <p class="mt-6 text-center text-[10px] text-gray-400 uppercase font-bold tracking-widest">Pago seguro vía Stripe <i class="fab fa-stripe text-2xl align-middle ml-1"></i></p>
-            </div>
-        </div>
-    </div>
-
-    <!-- SPECIFIC CATEGORY SUBSCRIBE MODAL (NEW) -->
+    <!-- SPECIFIC CATEGORY SUBSCRIBE MODAL -->
     <div id="alerts-panel" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[65] hidden items-center justify-center p-4">
         <div class="bg-white dark:bg-slate-900 w-full max-w-xl rounded-3xl shadow-2xl p-8">
             <div class="flex justify-between items-center mb-6">
                 <div>
                     <h3 class="text-2xl font-black flex items-center gap-3">
-                        <i class="fas fa-envelope-open-text text-blue-600"></i> Suscripción
+                        <i class="fas fa-envelope-open-text text-blue-600"></i> Alertas Gratuitas
                     </h3>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Recibe avisos solo de lo que te interesa.</p>
                 </div>
@@ -266,11 +193,11 @@
                 </div>
                 
                 <button onclick="confirmSubscription()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all flex justify-center items-center gap-2">
-                    <span>Confirmar Suscripción</span> <i class="fas fa-arrow-right"></i>
+                    <span>Activar Alertas</span> <i class="fas fa-arrow-right"></i>
                 </button>
 
                 <p class="text-[10px] text-center text-gray-400">
-                    Al suscribirte aceptas recibir notificaciones relacionadas con esta categoría. Puedes darte de baja en cualquier momento.
+                    Al suscribirte aceptas recibir notificaciones relacionadas con esta categoría. Puedes darte de baja en cualquier momento. Servicio 100% gratuito.
                 </p>
             </div>
         </div>
@@ -394,8 +321,6 @@
             currentTab: 'noticias',
             searchQuery: '',
             filterCategory: 'all',
-            isPremium: false,
-            consultationsToday: 0,
             viewedIds: []
         };
 
@@ -437,7 +362,6 @@
 
         async function summarizePost(id, title) {
             const container = document.getElementById(`summary-${id}`);
-            const btn = document.getElementById(`btn-summary-${id}`);
             
             // Toggle visibility if already loaded
             if (container.innerHTML !== '' && !container.classList.contains('hidden')) {
@@ -689,34 +613,9 @@
         // --- CORE FUNCTIONS ---
 
         function init() {
-            loadState();
+            // We removed loadState premium check here
             renderPosts();
-            updateUI();
             updateCounts();
-        }
-
-        function loadState() {
-            const saved = localStorage.getItem('scs_empleo_state');
-            const today = new Date().toDateString();
-            
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                if (parsed.lastVisit === today) {
-                    state.consultationsToday = parsed.count || 0;
-                    state.viewedIds = parsed.viewedIds || [];
-                }
-                state.isPremium = parsed.isPremium || false;
-            }
-            state.lastVisit = today;
-        }
-
-        function saveState() {
-            localStorage.setItem('scs_empleo_state', JSON.stringify({
-                lastVisit: state.lastVisit,
-                count: state.consultationsToday,
-                viewedIds: state.viewedIds,
-                isPremium: state.isPremium
-            }));
         }
 
         function renderPosts() {
@@ -737,7 +636,7 @@
 
         function createCard(post) {
             const div = document.createElement('div');
-            const isLocked = !state.isPremium && state.consultationsToday >= 1 && !state.viewedIds.includes(post.id);
+            // Premium logic removed - always unlocked
             
             div.className = "glass-card p-6 rounded-[2rem] flex flex-col h-full hover:shadow-2xl transition-all duration-500 relative group";
             
@@ -747,8 +646,7 @@
                 'GOOGLE': { color: 'orange', label: 'Noticias', icon: 'fa-globe' }
             }[post.category];
 
-            // AI Feature Button added in the footer of the card
-            const aiButton = isLocked ? '' : `
+            const aiButton = `
                 <button id="btn-summary-${post.id}" onclick="event.stopPropagation(); summarizePost(${post.id}, '${post.title}')" 
                     class="mt-4 w-full py-2 bg-purple-50 dark:bg-purple-900/10 text-purple-600 dark:text-purple-300 rounded-lg text-xs font-bold border border-purple-100 dark:border-purple-900 hover:bg-purple-100 transition-colors flex items-center justify-center gap-2">
                     <i class="fas fa-magic"></i> Resumir con IA ✨
@@ -757,7 +655,7 @@
             `;
 
             div.innerHTML = `
-                <div class="${isLocked ? 'paywall-blur' : ''} flex-1 flex flex-col">
+                <div class="flex-1 flex flex-col">
                     <div class="flex justify-between items-start mb-5">
                         <span class="text-[10px] font-black uppercase tracking-[0.2em] text-${meta.color}-600">
                             <i class="fas ${meta.icon} mr-1"></i> ${meta.label}
@@ -776,15 +674,6 @@
                         <button onclick="viewPost(${post.id})" class="px-5 py-2.5 bg-gray-900 dark:bg-blue-600 text-white rounded-xl text-xs font-bold hover:scale-105 transition-transform">Ver PDF</button>
                     </div>
                 </div>
-                ${isLocked ? `
-                    <div class="absolute inset-0 z-10 flex flex-col items-center justify-center p-6 text-center">
-                        <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg mb-3">
-                            <i class="fas fa-lock text-blue-600"></i>
-                        </div>
-                        <p class="text-xs font-bold mb-3">Contenido Premium</p>
-                        <button onclick="showSubscriptionModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-[10px] font-black uppercase tracking-wider">Desbloquear ahora</button>
-                    </div>
-                ` : ''}
             `;
             return div;
         }
@@ -798,33 +687,13 @@
         }
 
         function viewPost(id) {
-            if (state.isPremium || state.viewedIds.includes(id)) {
-                const p = MOCK_DATA.find(x => x.id === id);
-                if(p.link !== '#') window.open(p.link, '_blank');
-                else alert("Funcionalidad de visualización de PDF abierta.");
-            } else {
-                if (state.consultationsToday < 1) {
-                    state.consultationsToday++;
-                    state.viewedIds.push(id);
-                    saveState();
-                    updateUI();
-                    renderPosts();
-                    const p = MOCK_DATA.find(x => x.id === id);
-                    if(p.link !== '#') window.open(p.link, '_blank');
-                } else {
-                    document.getElementById('paywall-container').classList.remove('hidden');
-                }
-            }
+            // Premium check removed
+            const p = MOCK_DATA.find(x => x.id === id);
+            if(p.link !== '#') window.open(p.link, '_blank');
+            else alert("Funcionalidad de visualización de PDF abierta.");
         }
 
         // --- UI UPDATES ---
-
-        function updateUI() {
-            const countText = state.isPremium ? "ILIMITADO" : `${state.consultationsToday}/1`;
-            document.getElementById('daily-counter').innerText = countText;
-            const progress = state.isPremium ? 100 : (state.consultationsToday / 1) * 100;
-            document.getElementById('counter-progress').style.width = `${progress}%`;
-        }
 
         function updateCounts() {
             ['estabilizacion2022', 'convocatoria2025', 'supletorias', 'traslados', 'otras'].forEach(tab => {
@@ -843,7 +712,7 @@
             // Set Title dynamically
             const categoryName = CATEGORY_NAMES[tabId] || 'NOTICIAS';
             document.getElementById('view-title').innerText = categoryName;
-            document.getElementById('subscribe-btn-text').innerText = `Suscribirse a ${categoryName}`;
+            document.getElementById('subscribe-btn-text').innerText = `Recibir avisos ${categoryName}`;
             
             const filterBar = document.getElementById('filter-container');
             filterBar.classList.toggle('hidden', tabId !== 'noticias');
@@ -870,16 +739,6 @@
 
         // --- MODAL & FLOW CONTROLS ---
 
-        function showSubscriptionModal() {
-            document.getElementById('subscription-modal').classList.remove('hidden');
-            document.getElementById('subscription-modal').classList.add('flex');
-        }
-
-        function hideSubscriptionModal() {
-            document.getElementById('subscription-modal').classList.add('hidden');
-            document.getElementById('subscription-modal').classList.remove('flex');
-        }
-        
         function showSpecificSubscribeModal() {
              const categoryName = CATEGORY_NAMES[state.currentTab] || 'NOTICIAS';
              document.getElementById('modal-category-name').innerText = categoryName;
@@ -900,28 +759,8 @@
                 return;
             }
             const categoryName = CATEGORY_NAMES[state.currentTab] || 'NOTICIAS';
-            alert(`✅ ¡Suscrito con éxito!\n\nRecibirás alertas sobre "${categoryName}" en: ${email}`);
+            alert(`✅ ¡Suscrito con éxito!\n\nRecibirás alertas GRATUITAS sobre "${categoryName}" en: ${email}`);
             hideAlertsPanel();
-        }
-
-        function closePaywall() {
-            document.getElementById('paywall-container').classList.add('hidden');
-        }
-
-        function showAlertsPanel() {
-            document.getElementById('alerts-panel').classList.remove('hidden');
-            document.getElementById('alerts-panel').classList.add('flex');
-        }
-
-        function checkout(plan) {
-            alert(`Conectando con Stripe para el plan ${plan}...`);
-            // Simulación de éxito
-            state.isPremium = true;
-            saveState();
-            hideSubscriptionModal();
-            closePaywall();
-            updateUI();
-            renderPosts();
         }
 
         function toggleDarkMode() {
