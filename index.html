@@ -34,23 +34,39 @@
         .dark .ai-content strong { color: #d1d5db; }
         .ai-content ul { list-style-type: disc; padding-left: 1.5rem; margin-top: 0.5rem; }
         .ai-content li { margin-bottom: 0.25rem; }
+
+        /* Chat Widget Styles */
+        .chat-message { max-width: 80%; padding: 0.75rem 1rem; border-radius: 1rem; margin-bottom: 0.5rem; font-size: 0.875rem; line-height: 1.4; }
+        .chat-user { background-color: var(--scs-blue); color: white; align-self: flex-end; border-bottom-right-radius: 0.25rem; }
+        .chat-ai { background-color: #f3f4f6; color: #1f2937; align-self: flex-start; border-bottom-left-radius: 0.25rem; }
+        .dark .chat-ai { background-color: #334155; color: #f8fafc; }
+        .typing-dot { animation: typing 1.4s infinite ease-in-out both; }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
     </style>
 </head>
 <body class="bg-gray-50 text-slate-800 antialiased overflow-x-hidden">
 
     <!-- Mobile Navigation Overlay -->
-    <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden"></div>
+    <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden backdrop-blur-sm transition-opacity"></div>
 
     <div class="flex min-h-screen">
         <!-- Sidebar Navigation -->
-        <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-72 bg-white dark:bg-slate-900 shadow-xl transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out border-r border-gray-200 dark:border-slate-800">
-            <div class="flex flex-col h-full p-6">
-                <div class="flex items-center gap-3 mb-8">
-                    <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-500/30">E</div>
-                    <div>
-                        <h1 class="font-bold text-xl leading-tight tracking-tight">EMPLEO SCS</h1>
-                        <p class="text-[10px] text-blue-600 dark:text-blue-400 uppercase tracking-widest font-bold">Canarias Oficial</p>
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-72 bg-white dark:bg-slate-900 shadow-xl transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out border-r border-gray-200 dark:border-slate-800 flex flex-col h-full">
+            <div class="p-6 flex flex-col h-full">
+                <div class="flex items-center justify-between mb-8">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-500/30">E</div>
+                        <div>
+                            <h1 class="font-bold text-xl leading-tight tracking-tight">EMPLEO SCS</h1>
+                            <p class="text-[10px] text-blue-600 dark:text-blue-400 uppercase tracking-widest font-bold">Canarias Oficial</p>
+                        </div>
                     </div>
+                    <!-- Close button for mobile -->
+                    <button onclick="toggleSidebar()" class="lg:hidden text-gray-500 hover:text-blue-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
                 </div>
 
                 <!-- User Status / Daily Counter -->
@@ -65,39 +81,43 @@
                     <button onclick="showSubscriptionModal()" class="mt-3 w-full text-[10px] py-2 bg-white dark:bg-slate-800 text-blue-600 border border-blue-200 dark:border-blue-700 rounded-lg font-bold hover:bg-blue-600 hover:text-white transition-all uppercase tracking-tighter">Pasar a Pro (Ilimitado)</button>
                 </div>
 
-                <nav class="flex-1 space-y-1 overflow-y-auto pr-2">
-                    <button onclick="switchTab('noticias')" class="sidebar-link active w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-slate-800" data-tab="noticias">
+                <!-- Main Menu -->
+                <nav class="flex-1 space-y-1 overflow-y-auto pr-2 custom-scrollbar">
+                    <button onclick="switchTab('noticias')" class="sidebar-link active w-full flex items-center gap-3 px-4 py-3 text-sm font-bold transition-colors hover:bg-gray-100 dark:hover:bg-slate-800 uppercase" data-tab="noticias">
                         <i class="fas fa-bolt-lightning w-5"></i> NOTICIAS
                     </button>
-                    <button onclick="switchTab('estabilizacion2022')" class="sidebar-link w-full flex items-center justify-between px-4 py-3 text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-slate-800" data-tab="estabilizacion2022">
+                    <button onclick="switchTab('estabilizacion2022')" class="sidebar-link w-full flex items-center justify-between px-4 py-3 text-sm font-bold transition-colors hover:bg-gray-100 dark:hover:bg-slate-800 uppercase" data-tab="estabilizacion2022">
                         <span class="flex items-center gap-3 text-left"><i class="fas fa-shield-halved w-5"></i> ESTABILIZACIÓN 2022</span>
-                        <span class="bg-gray-100 dark:bg-slate-800 text-[10px] px-2 py-0.5 rounded" id="count-estabilizacion2022">0</span>
+                        <span class="bg-gray-100 dark:bg-slate-800 text-[10px] px-2 py-0.5 rounded font-normal normal-case" id="count-estabilizacion2022">0</span>
                     </button>
-                    <button onclick="switchTab('convocatoria2025')" class="sidebar-link w-full flex items-center justify-between px-4 py-3 text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-slate-800" data-tab="convocatoria2025">
+                    <button onclick="switchTab('convocatoria2025')" class="sidebar-link w-full flex items-center justify-between px-4 py-3 text-sm font-bold transition-colors hover:bg-gray-100 dark:hover:bg-slate-800 uppercase" data-tab="convocatoria2025">
                         <span class="flex items-center gap-3"><i class="fas fa-calendar-check w-5"></i> CONVOCATORIA 2025</span>
-                        <span class="bg-gray-100 dark:bg-slate-800 text-[10px] px-2 py-0.5 rounded" id="count-convocatoria2025">0</span>
+                        <span class="bg-gray-100 dark:bg-slate-800 text-[10px] px-2 py-0.5 rounded font-normal normal-case" id="count-convocatoria2025">0</span>
                     </button>
-                    <button onclick="switchTab('supletorias')" class="sidebar-link w-full flex items-center justify-between px-4 py-3 text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-slate-800" data-tab="supletorias">
+                    <button onclick="switchTab('supletorias')" class="sidebar-link w-full flex items-center justify-between px-4 py-3 text-sm font-bold transition-colors hover:bg-gray-100 dark:hover:bg-slate-800 uppercase" data-tab="supletorias">
                         <span class="flex items-center gap-3"><i class="fas fa-list-ol w-5"></i> LISTAS SUPLETORIAS</span>
-                        <span class="bg-gray-100 dark:bg-slate-800 text-[10px] px-2 py-0.5 rounded" id="count-supletorias">0</span>
+                        <span class="bg-gray-100 dark:bg-slate-800 text-[10px] px-2 py-0.5 rounded font-normal normal-case" id="count-supletorias">0</span>
                     </button>
-                    <button onclick="switchTab('traslados')" class="sidebar-link w-full flex items-center justify-between px-4 py-3 text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-slate-800" data-tab="traslados">
-                        <span class="flex items-center gap-3 text-left"><i class="fas fa-arrows-rotate w-5"></i> CONCURSO TRASLADO</span>
-                        <span class="bg-gray-100 dark:bg-slate-800 text-[10px] px-2 py-0.5 rounded" id="count-traslados">0</span>
+                    <button onclick="switchTab('traslados')" class="sidebar-link w-full flex items-center justify-between px-4 py-3 text-sm font-bold transition-colors hover:bg-gray-100 dark:hover:bg-slate-800 uppercase" data-tab="traslados">
+                        <span class="flex items-center gap-3 text-left"><i class="fas fa-arrows-rotate w-5"></i> CONCURSO DE TRASLADO</span>
+                        <span class="bg-gray-100 dark:bg-slate-800 text-[10px] px-2 py-0.5 rounded font-normal normal-case" id="count-traslados">0</span>
                     </button>
-                    <button onclick="switchTab('otras')" class="sidebar-link w-full flex items-center justify-between px-4 py-3 text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-slate-800" data-tab="otras">
-                        <span class="flex items-center gap-3"><i class="fas fa-folder-open w-5"></i> OTRAS CONV.</span>
-                        <span class="bg-gray-100 dark:bg-slate-800 text-[10px] px-2 py-0.5 rounded" id="count-otras">0</span>
+                    <button onclick="switchTab('otras')" class="sidebar-link w-full flex items-center justify-between px-4 py-3 text-sm font-bold transition-colors hover:bg-gray-100 dark:hover:bg-slate-800 uppercase" data-tab="otras">
+                        <span class="flex items-center gap-3"><i class="fas fa-folder-open w-5"></i> OTRAS CONVOCATORIAS</span>
+                        <span class="bg-gray-100 dark:bg-slate-800 text-[10px] px-2 py-0.5 rounded font-normal normal-case" id="count-otras">0</span>
                     </button>
                     
                     <div class="pt-4 mt-4 border-t border-gray-100 dark:border-slate-800">
-                        <p class="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Herramientas</p>
-                        <button onclick="showAlertsPanel()" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-slate-800 text-blue-600 dark:text-blue-400 mb-1">
-                            <i class="fas fa-bell w-5"></i> Mis Alertas Email
-                        </button>
+                        <p class="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Herramientas IA</p>
+                        
                         <!-- Gemini Feature: Study Assistant Button -->
                         <button onclick="openStudyAssistant()" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-slate-800 text-purple-600 dark:text-purple-400 group">
                             <i class="fas fa-brain w-5 group-hover:scale-110 transition-transform"></i> Asistente de Estudio ✨
+                        </button>
+                        
+                        <!-- Gemini Feature: Chat Mentor Button -->
+                        <button onclick="toggleChat()" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-slate-800 text-teal-600 dark:text-teal-400 group">
+                            <i class="fas fa-comments w-5 group-hover:scale-110 transition-transform"></i> Chat Mentor SCS ✨
                         </button>
                     </div>
                 </nav>
@@ -113,22 +133,38 @@
         </aside>
 
         <!-- Main Content Area -->
-        <main class="flex-1 lg:ml-72 p-4 md:p-10">
+        <main class="flex-1 lg:ml-72 p-4 md:p-10 transition-all duration-300">
             <!-- Header Bar -->
-            <header class="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
-                <div class="animate-in fade-in slide-in-from-left duration-500">
-                    <h2 id="view-title" class="text-4xl font-extrabold tracking-tight">Noticias de Empleo</h2>
-                    <p id="view-desc" class="text-gray-500 dark:text-gray-400 mt-1">Sincronización en tiempo real con el BOC y Portal SCS.</p>
+            <header class="flex flex-col gap-4 mb-10">
+                <!-- Top Row: Mobile Menu + Search -->
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleSidebar()" class="lg:hidden p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm text-gray-600 dark:text-gray-300">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    
+                    <div class="relative flex-1">
+                        <input type="text" id="global-search" oninput="handleSearch(this.value)" placeholder="Buscar por categoría, resolución o cargo..." 
+                            class="w-full pl-12 pr-4 py-4 rounded-2xl border-0 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-xl shadow-gray-200/50 dark:shadow-none">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                    </div>
                 </div>
-                
-                <div class="relative max-w-md w-full">
-                    <input type="text" id="global-search" oninput="handleSearch(this.value)" placeholder="Buscar por categoría, resolución o cargo..." 
-                        class="w-full pl-12 pr-4 py-4 rounded-2xl border-0 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-xl shadow-gray-200/50 dark:shadow-none">
-                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+
+                <!-- Title & Contextual Subscribe -->
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 animate-in fade-in slide-in-from-left duration-500">
+                    <div>
+                        <h2 id="view-title" class="text-3xl md:text-4xl font-extrabold tracking-tight">NOTICIAS</h2>
+                        <p id="view-desc" class="text-gray-500 dark:text-gray-400 mt-1">Sincronización en tiempo real con el BOC y Portal SCS.</p>
+                    </div>
+                    
+                    <!-- New Subscribe Button (Specific to current category) -->
+                    <button onclick="showSpecificSubscribeModal()" id="subscribe-category-btn" class="flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition-all whitespace-nowrap">
+                        <i class="fas fa-bell"></i> 
+                        <span id="subscribe-btn-text">Suscribirse a NOTICIAS</span>
+                    </button>
                 </div>
             </header>
 
-            <!-- Filters -->
+            <!-- Filters (Quick Access) -->
             <div id="filter-container" class="flex flex-wrap gap-2 mb-8 overflow-x-auto pb-2 scrollbar-hide">
                 <button onclick="filterByCategory('all')" class="category-btn active bg-blue-600 text-white px-5 py-2.5 rounded-full text-xs font-bold shadow-lg shadow-blue-500/20 whitespace-nowrap">Todas las fuentes</button>
                 <button onclick="filterByCategory('SCS')" class="category-btn bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap">Portal SCS</button>
@@ -157,7 +193,7 @@
         </main>
     </div>
 
-    <!-- SUBSCRIPTION MODAL -->
+    <!-- SUBSCRIPTION MODAL (GENERAL) -->
     <div id="subscription-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden items-center justify-center p-4">
         <div class="bg-white dark:bg-slate-900 w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row">
             <div class="md:w-1/2 p-10 bg-gradient-to-br from-blue-700 to-blue-900 text-white">
@@ -202,56 +238,40 @@
         </div>
     </div>
 
-    <!-- ALERTS PANEL -->
-    <div id="alerts-panel" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden items-center justify-center p-4">
+    <!-- SPECIFIC CATEGORY SUBSCRIBE MODAL (NEW) -->
+    <div id="alerts-panel" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[65] hidden items-center justify-center p-4">
         <div class="bg-white dark:bg-slate-900 w-full max-w-xl rounded-3xl shadow-2xl p-8">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-black flex items-center gap-3">
-                    <i class="fas fa-bell text-blue-600"></i> Mis Alertas Email
-                </h3>
+                <div>
+                    <h3 class="text-2xl font-black flex items-center gap-3">
+                        <i class="fas fa-envelope-open-text text-blue-600"></i> Suscripción
+                    </h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Recibe avisos solo de lo que te interesa.</p>
+                </div>
                 <button onclick="hideAlertsPanel()" class="text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
             </div>
             
             <div class="space-y-6">
                 <div>
                     <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Tu Correo Electrónico</label>
-                    <input type="email" placeholder="ejemplo@correo.com" class="w-full p-4 rounded-xl bg-gray-50 dark:bg-slate-800 border-0 focus:ring-2 focus:ring-blue-500 outline-none">
+                    <input type="email" id="subscribe-email" placeholder="tu@email.com" class="w-full p-4 rounded-xl bg-gray-50 dark:bg-slate-800 border-0 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                </div>
+
+                <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800">
+                    <label class="block text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-2">Categoría Seleccionada</label>
+                    <div class="flex items-center gap-2 text-lg font-bold">
+                        <i class="fas fa-check-circle text-blue-600"></i>
+                        <span id="modal-category-name">NOTICIAS</span>
+                    </div>
                 </div>
                 
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Categorías Profesionales</label>
-                    <div class="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                        <!-- Categories -->
-                        <label class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-slate-800 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/10 border border-transparent hover:border-blue-200">
-                            <input type="checkbox" class="w-4 h-4 rounded text-blue-600"> <span class="text-sm">Enfermera/o</span>
-                        </label>
-                        <label class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-slate-800 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/10 border border-transparent hover:border-blue-200">
-                            <input type="checkbox" class="w-4 h-4 rounded text-blue-600"> <span class="text-sm">Médico</span>
-                        </label>
-                        <label class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-slate-800 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/10 border border-transparent hover:border-blue-200">
-                            <input type="checkbox" class="w-4 h-4 rounded text-blue-600"> <span class="text-sm">TCAE</span>
-                        </label>
-                        <label class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-slate-800 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/10 border border-transparent hover:border-blue-200">
-                            <input type="checkbox" class="w-4 h-4 rounded text-blue-600"> <span class="text-sm">Celador/a</span>
-                        </label>
-                        <label class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-slate-800 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/10 border border-transparent hover:border-blue-200">
-                            <input type="checkbox" class="w-4 h-4 rounded text-blue-600"> <span class="text-sm">Administrativo/a</span>
-                        </label>
-                        <label class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-slate-800 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/10 border border-transparent hover:border-blue-200">
-                            <input type="checkbox" class="w-4 h-4 rounded text-blue-600"> <span class="text-sm">Fisioterapeuta</span>
-                        </label>
-                    </div>
-                </div>
+                <button onclick="confirmSubscription()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all flex justify-center items-center gap-2">
+                    <span>Confirmar Suscripción</span> <i class="fas fa-arrow-right"></i>
+                </button>
 
-                <div class="p-4 rounded-xl bg-orange-50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-900 flex items-start gap-4">
-                    <i class="fas fa-crown text-orange-500 mt-1"></i>
-                    <div>
-                        <p class="text-xs font-bold text-orange-800 dark:text-orange-400">Exclusivo Plan Pro</p>
-                        <p class="text-[10px] text-orange-700 dark:text-orange-500">Las alertas instantáneas requieren una suscripción activa.</p>
-                    </div>
-                </div>
-
-                <button class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all">Guardar Configuración</button>
+                <p class="text-[10px] text-center text-gray-400">
+                    Al suscribirte aceptas recibir notificaciones relacionadas con esta categoría. Puedes darte de baja en cualquier momento.
+                </p>
             </div>
         </div>
     </div>
@@ -302,13 +322,51 @@
         </div>
     </div>
 
+    <!-- NEW: GEMINI CHAT MENTOR WIDGET -->
+    <div id="chat-widget" class="fixed bottom-6 right-6 z-[80] flex flex-col items-end pointer-events-none">
+        <!-- Chat Window -->
+        <div id="chat-window" class="pointer-events-auto bg-white dark:bg-slate-800 w-80 sm:w-96 h-[32rem] rounded-3xl shadow-2xl border border-gray-100 dark:border-slate-700 mb-4 transform translate-y-10 opacity-0 transition-all duration-300 origin-bottom-right hidden flex flex-col overflow-hidden">
+            <!-- Header -->
+            <div class="bg-teal-600 p-4 text-white flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center"><i class="fas fa-robot text-sm"></i></div>
+                    <div>
+                        <h4 class="font-bold text-sm">Mentor SCS</h4>
+                        <p class="text-[10px] opacity-80 flex items-center gap-1"><span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span> En línea (Gemini)</p>
+                    </div>
+                </div>
+                <button onclick="toggleChat()" class="text-white/80 hover:text-white"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <!-- Messages Area -->
+            <div id="chat-messages" class="flex-1 p-4 overflow-y-auto space-y-4 bg-gray-50 dark:bg-slate-900/50">
+                <!-- Initial Message -->
+                <div class="flex flex-col items-start">
+                    <div class="chat-message chat-ai shadow-sm">
+                        ¡Hola! Soy tu mentor virtual para las oposiciones del SCS. 🏥 <br><br>Pregúntame sobre baremos, listas supletorias, temarios o cualquier duda del proceso.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="p-3 bg-white dark:bg-slate-800 border-t border-gray-100 dark:border-slate-700 flex gap-2">
+                <input type="text" id="chat-input" placeholder="Escribe tu duda..." class="flex-1 px-4 py-2 bg-gray-100 dark:bg-slate-900 rounded-full text-sm outline-none focus:ring-2 focus:ring-teal-500" onkeypress="if(event.key === 'Enter') sendChatMessage()">
+                <button onclick="sendChatMessage()" class="w-10 h-10 bg-teal-600 text-white rounded-full flex items-center justify-center hover:bg-teal-700 transition-colors shadow-lg shadow-teal-500/30">
+                    <i class="fas fa-paper-plane text-xs"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Float Button -->
+        <button onclick="toggleChat()" class="pointer-events-auto w-14 h-14 bg-teal-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform hover:bg-teal-700 group relative">
+            <i class="fas fa-comment-medical text-2xl group-hover:rotate-12 transition-transform"></i>
+            <span class="absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
+        </button>
+    </div>
+
     <script>
         // --- CONFIG ---
-        // IMPORTANTE: En este entorno de prueba (Canvas), la variable apiKey se deja vacía 
-        // y el sistema la inyecta automáticamente.
-        // Si descargas este archivo para usarlo en tu propio servidor/PC, debes pegar 
-        // tu propia API Key de Google AI Studio aquí:
-        const apiKey = ""; 
+        const apiKey = "AIzaSyAmGRt_qQuYxnp3KoqV3Q_OCMw8_pwONs4"; 
 
         // --- DATA & STATE ---
         const MOCK_DATA = [
@@ -339,6 +397,15 @@
             isPremium: false,
             consultationsToday: 0,
             viewedIds: []
+        };
+
+        const CATEGORY_NAMES = {
+            'noticias': 'NOTICIAS',
+            'estabilizacion2022': 'ESTABILIZACIÓN 2022',
+            'convocatoria2025': 'CONVOCATORIA 2025',
+            'supletorias': 'LISTAS SUPLETORIAS',
+            'traslados': 'CONCURSO DE TRASLADO',
+            'otras': 'OTRAS CONVOCATORIAS'
         };
 
         // --- GEMINI API HELPERS ---
@@ -529,6 +596,96 @@
             expBox.classList.remove('hidden');
         }
 
+        // --- FEATURE: CHAT MENTOR SCS ---
+
+        let isChatOpen = false;
+
+        function toggleChat() {
+            const window = document.getElementById('chat-window');
+            if (isChatOpen) {
+                window.classList.add('hidden');
+                window.classList.add('opacity-0', 'translate-y-10');
+            } else {
+                window.classList.remove('hidden');
+                // Small delay to allow display block to apply before opacity transition
+                setTimeout(() => {
+                    window.classList.remove('opacity-0', 'translate-y-10');
+                }, 10);
+                document.getElementById('chat-input').focus();
+            }
+            isChatOpen = !isChatOpen;
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            // UI Add User Message
+            addMessageToChat(msg, 'user');
+            input.value = '';
+
+            // Add Loading Indicators
+            const loadingId = addLoadingToChat();
+
+            try {
+                const prompt = `Actúa como un mentor experto y amable en las Oposiciones del Servicio Canario de Salud (SCS). 
+                Responde brevemente a esta pregunta de un opositor: "${msg}". 
+                Si la pregunta no es sobre oposiciones o sanidad, responde educadamente que solo sabes de ese tema.`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }]
+                };
+
+                const data = await callGeminiAPI(payload);
+                const reply = data.candidates[0].content.parts[0].text;
+
+                // Remove loading and add response
+                document.getElementById(loadingId).remove();
+                addMessageToChat(reply, 'ai');
+
+            } catch (err) {
+                document.getElementById(loadingId).remove();
+                addMessageToChat("Lo siento, hubo un error de conexión. Inténtalo de nuevo.", 'ai');
+                console.error(err);
+            }
+        }
+
+        function addMessageToChat(text, sender) {
+            const container = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            div.className = `flex flex-col ${sender === 'user' ? 'items-end' : 'items-start'}`;
+            
+            const bubble = document.createElement('div');
+            bubble.className = `chat-message shadow-sm ${sender === 'user' ? 'chat-user' : 'chat-ai'}`;
+            // Simple markdown parsing
+            bubble.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+            
+            div.appendChild(bubble);
+            container.appendChild(div);
+            
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function addLoadingToChat() {
+            const container = document.getElementById('chat-messages');
+            const id = 'loading-' + Date.now();
+            const div = document.createElement('div');
+            div.id = id;
+            div.className = "flex flex-col items-start";
+            div.innerHTML = `
+                <div class="chat-message chat-ai shadow-sm flex gap-1 items-center h-8">
+                    <div class="w-2 h-2 bg-gray-400 rounded-full typing-dot"></div>
+                    <div class="w-2 h-2 bg-gray-400 rounded-full typing-dot"></div>
+                    <div class="w-2 h-2 bg-gray-400 rounded-full typing-dot"></div>
+                </div>
+            `;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+            return id;
+        }
+
         // --- CORE FUNCTIONS ---
 
         function init() {
@@ -683,15 +840,10 @@
                 btn.classList.toggle('active', btn.dataset.tab === tabId);
             });
 
-            const titles = {
-                'noticias': 'Novedades SCS',
-                'estabilizacion2022': 'OPE Estabilización 2022',
-                'convocatoria2025': 'Convocatoria 2025',
-                'supletorias': 'Listas Supletorias',
-                'traslados': 'Concurso de Traslado',
-                'otras': 'Otras Convocatorias'
-            };
-            document.getElementById('view-title').innerText = titles[tabId];
+            // Set Title dynamically
+            const categoryName = CATEGORY_NAMES[tabId] || 'NOTICIAS';
+            document.getElementById('view-title').innerText = categoryName;
+            document.getElementById('subscribe-btn-text').innerText = `Suscribirse a ${categoryName}`;
             
             const filterBar = document.getElementById('filter-container');
             filterBar.classList.toggle('hidden', tabId !== 'noticias');
@@ -727,6 +879,30 @@
             document.getElementById('subscription-modal').classList.add('hidden');
             document.getElementById('subscription-modal').classList.remove('flex');
         }
+        
+        function showSpecificSubscribeModal() {
+             const categoryName = CATEGORY_NAMES[state.currentTab] || 'NOTICIAS';
+             document.getElementById('modal-category-name').innerText = categoryName;
+             
+             document.getElementById('alerts-panel').classList.remove('hidden');
+             document.getElementById('alerts-panel').classList.add('flex');
+        }
+
+        function hideAlertsPanel() {
+            document.getElementById('alerts-panel').classList.add('hidden');
+            document.getElementById('alerts-panel').classList.remove('flex');
+        }
+        
+        function confirmSubscription() {
+            const email = document.getElementById('subscribe-email').value;
+            if(!email || !email.includes('@')) {
+                alert("Por favor introduce un email válido.");
+                return;
+            }
+            const categoryName = CATEGORY_NAMES[state.currentTab] || 'NOTICIAS';
+            alert(`✅ ¡Suscrito con éxito!\n\nRecibirás alertas sobre "${categoryName}" en: ${email}`);
+            hideAlertsPanel();
+        }
 
         function closePaywall() {
             document.getElementById('paywall-container').classList.add('hidden');
@@ -735,11 +911,6 @@
         function showAlertsPanel() {
             document.getElementById('alerts-panel').classList.remove('hidden');
             document.getElementById('alerts-panel').classList.add('flex');
-        }
-
-        function hideAlertsPanel() {
-            document.getElementById('alerts-panel').classList.add('hidden');
-            document.getElementById('alerts-panel').classList.remove('flex');
         }
 
         function checkout(plan) {
@@ -761,7 +932,12 @@
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebar-overlay');
             sidebar.classList.toggle('-translate-x-full');
-            overlay.classList.toggle('hidden');
+            
+            if (sidebar.classList.contains('-translate-x-full')) {
+                overlay.classList.add('hidden');
+            } else {
+                overlay.classList.remove('hidden');
+            }
         }
 
         window.onload = init;
