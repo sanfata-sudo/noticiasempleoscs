@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMPLEO SCS - Gestión de Noticias de Empleo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --scs-blue: #0066CC;
+            --scs-blue-dark: #004d99;
+        }
+        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s; }
+        .dark { background-color: #0f172a; color: #f8fafc; }
+        .sidebar-link.active { background-color: var(--scs-blue); color: white; border-radius: 0.5rem; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        .dark .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .paywall-blur { filter: blur(4px); pointer-events: none; user-select: none; }
+        .loader { border-top-color: var(--scs-blue); animation: spinner 0.6s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Markdown-like styles for AI summary */
+        .ai-content strong { font-weight: 700; color: #4b5563; }
+        .dark .ai-content strong { color: #d1d5db; }
+        .ai-content ul { list-style-type: disc; padding-left: 1.5rem; margin-top: 0.5rem; }
+        .ai-content li { margin-bottom: 0.25rem; }
+    </style>
+</head>
+<body class="bg-gray-50 text-slate-800 antialiased overflow-x-hidden">
+
+    <!-- Mobile Navigation Overlay -->
+    <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden"></div>
+
+    <div class="flex min-h-screen">
+        <!-- Sidebar Navigation -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-72 bg-white dark:bg-slate-900 shadow-xl transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out border-r border-gray-200 dark:border-slate-800">
+            <div class="flex flex-col h-full p-6">
+                <div class="flex items-center gap-3 mb-8">
+                    <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-500/30">E</div>
+                    <div>
+                        <h1 class="font-bold text-xl leading-tight tracking-tight">EMPLEO SCS</h1>
+                        <p class="text-[10px] text-blue-600 dark:text-blue-400 uppercase tracking-widest font-bold">Canarias Oficial</p>
+                    </div>
+                </div>
+
+                <!-- User Status / Daily Counter -->
+                <div id="user-status-card" class="mb-6 p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-semibold text-blue-700 dark:text-blue-300">Consultas hoy:</span>
+                        <span id="daily-counter" class="text-xs font-bold px-2 py-0.5 bg-blue-600 text-white rounded-full">0/1</span>
+                    </div>
+                    <div class="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-1.5">
+                        <div id="counter-progress" class="bg-blue-600 h-1.5 rounded-full transition-all" style="width: 0%"></div>
+                    </div>
+                    <button onclick="showSubscriptionModal()" class="mt-3 w-full text-[10px] py-2 bg-white dark:bg-slate-800 text-blue-600 border border-blue-200 dark:border-blue-700 rounded-lg font-bold hover:bg-blue-600 hover:text-white transition-all uppercase tracking-tighter">Pasar a Pro (Ilimitado)</button>
+                </div>
+
+                <nav class="flex-1 space-y-1 overflow-y-auto pr-2">
+                    <button onclick="switchTab('noticias')" class="sidebar-link active w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-slate-800" data-tab="noticias">
+                        <i class="fas fa-bolt-lightning w-5"></i> NOTICIAS
+                    </button>
+                    <button onclick="switchTab('estabilizacion2022')" class="sidebar-link w-full flex items-center justify-between px-4 py-3 text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-slate-800" data-tab="estabilizacion2022">
+                        <span class="flex items-center gap-3 text-left"><i class="fas fa-shield-halved w-5"></i> ESTABILIZACIÓN 2022</span>
+                        <span class="bg-gray-100 dark:bg-slate-800 text-[10px] px-2 py-0.5 rounded" id="count-estabilizacion2022">0</span>
+                    </button>
+                    <button onclick="switchTab('convocatoria2025')" class="sidebar-link w-full flex items-center justify-between px-4 py-3 text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-slate-800" data-tab="convocatoria2025">
+                        <span class="flex items-center gap-3"><i class="fas fa-calendar-check w-5"></i> CONVOCATORIA 2025</span>
+                        <span class="bg-gray-100 dark:bg-slate-800 text-[10px] px-2 py-0.5 rounded" id="count-convocatoria2025">0</span>
+                    </button>
+                    <button onclick="switchTab('supletorias')" class="sidebar-link w-full flex items-center justify-between px-4 py-3 text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-slate-800" data-tab="supletorias">
+                        <span class="flex items-center gap-3"><i class="fas fa-list-ol w-5"></i> LISTAS SUPLETORIAS</span>
+                        <span class="bg-gray-100 dark:bg-slate-800 text-[10px] px-2 py-0.5 rounded" id="count-supletorias">0</span>
+                    </button>
+                    <button onclick="switchTab('traslados')" class="sidebar-link w-full flex items-center justify-between px-4 py-3 text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-slate-800" data-tab="traslados">
+                        <span class="flex items-center gap-3 text-left"><i class="fas fa-arrows-rotate w-5"></i> CONCURSO TRASLADO</span>
+                        <span class="bg-gray-100 dark:bg-slate-800 text-[10px] px-2 py-0.5 rounded" id="count-traslados">0</span>
+                    </button>
+                    <button onclick="switchTab('otras')" class="sidebar-link w-full flex items-center justify-between px-4 py-3 text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-slate-800" data-tab="otras">
+                        <span class="flex items-center gap-3"><i class="fas fa-folder-open w-5"></i> OTRAS CONV.</span>
+                        <span class="bg-gray-100 dark:bg-slate-800 text-[10px] px-2 py-0.5 rounded" id="count-otras">0</span>
+                    </button>
+                    
+                    <div class="pt-4 mt-4 border-t border-gray-100 dark:border-slate-800">
+                        <p class="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Herramientas</p>
+                        <button onclick="showAlertsPanel()" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-slate-800 text-blue-600 dark:text-blue-400 mb-1">
+                            <i class="fas fa-bell w-5"></i> Mis Alertas Email
+                        </button>
+                        <!-- Gemini Feature: Study Assistant Button -->
+                        <button onclick="openStudyAssistant()" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors hover:bg-gray-100 dark:hover:bg-slate-800 text-purple-600 dark:text-purple-400 group">
+                            <i class="fas fa-brain w-5 group-hover:scale-110 transition-transform"></i> Asistente de Estudio ✨
+                        </button>
+                    </div>
+                </nav>
+
+                <div class="mt-auto pt-6 border-t border-gray-100 dark:border-slate-800 flex justify-between items-center">
+                    <button onclick="toggleDarkMode()" class="p-3 rounded-xl bg-gray-50 dark:bg-slate-800 text-gray-500 hover:text-blue-600 transition-colors">
+                        <i class="fas fa-moon dark:hidden"></i>
+                        <i class="fas fa-sun hidden dark:block"></i>
+                    </button>
+                    <button class="text-xs text-gray-400 font-medium hover:underline">Soporte técnico</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 lg:ml-72 p-4 md:p-10">
+            <!-- Header Bar -->
+            <header class="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
+                <div class="animate-in fade-in slide-in-from-left duration-500">
+                    <h2 id="view-title" class="text-4xl font-extrabold tracking-tight">Noticias de Empleo</h2>
+                    <p id="view-desc" class="text-gray-500 dark:text-gray-400 mt-1">Sincronización en tiempo real con el BOC y Portal SCS.</p>
+                </div>
+                
+                <div class="relative max-w-md w-full">
+                    <input type="text" id="global-search" oninput="handleSearch(this.value)" placeholder="Buscar por categoría, resolución o cargo..." 
+                        class="w-full pl-12 pr-4 py-4 rounded-2xl border-0 bg-white dark:bg-slate-800 focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-xl shadow-gray-200/50 dark:shadow-none">
+                    <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                </div>
+            </header>
+
+            <!-- Filters -->
+            <div id="filter-container" class="flex flex-wrap gap-2 mb-8 overflow-x-auto pb-2 scrollbar-hide">
+                <button onclick="filterByCategory('all')" class="category-btn active bg-blue-600 text-white px-5 py-2.5 rounded-full text-xs font-bold shadow-lg shadow-blue-500/20 whitespace-nowrap">Todas las fuentes</button>
+                <button onclick="filterByCategory('SCS')" class="category-btn bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap">Portal SCS</button>
+                <button onclick="filterByCategory('BOC')" class="category-btn bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap">BOC</button>
+            </div>
+
+            <!-- Posts Grid -->
+            <div id="posts-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                <!-- Injected via JS -->
+            </div>
+
+            <!-- Paywall Overlay -->
+            <div id="paywall-container" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md">
+                <div class="bg-white dark:bg-slate-900 max-w-lg w-full rounded-3xl p-10 shadow-2xl text-center border border-blue-100 dark:border-slate-800">
+                    <div class="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <h3 class="text-2xl font-black mb-2">Límite Diario Alcanzado</h3>
+                    <p class="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed">Has agotado tu consulta gratuita de hoy. Suscríbete para acceder a todo el contenido de forma ilimitada y recibir alertas instantáneas.</p>
+                    <div class="space-y-3">
+                        <button onclick="showSubscriptionModal()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/30">VER PLANES DE SUSCRIPCIÓN</button>
+                        <button onclick="closePaywall()" class="w-full py-4 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-400 rounded-2xl font-bold hover:bg-gray-200 transition-all">VOLVER AL LISTADO</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- SUBSCRIPTION MODAL -->
+    <div id="subscription-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col md:flex-row">
+            <div class="md:w-1/2 p-10 bg-gradient-to-br from-blue-700 to-blue-900 text-white">
+                <h3 class="text-3xl font-black mb-6">Únete a la versión Pro</h3>
+                <ul class="space-y-4 mb-10 text-blue-100">
+                    <li class="flex items-center gap-3"><i class="fas fa-check-circle text-blue-400"></i> Consultas ilimitadas 24/7</li>
+                    <li class="flex items-center gap-3"><i class="fas fa-check-circle text-blue-400"></i> Alertas email instantáneas</li>
+                    <li class="flex items-center gap-3"><i class="fas fa-check-circle text-blue-400"></i> Resúmenes IA (Gemini)</li>
+                    <li class="flex items-center gap-3"><i class="fas fa-check-circle text-blue-400"></i> Descarga directa de archivos</li>
+                    <li class="flex items-center gap-3"><i class="fas fa-check-circle text-blue-400"></i> Sin publicidad</li>
+                </ul>
+                <div class="bg-white/10 p-6 rounded-2xl border border-white/10">
+                    <p class="text-sm italic">"Desde que uso el plan Pro, no se me escapa ninguna lista supletoria. ¡Muy recomendable!"</p>
+                    <p class="mt-3 font-bold text-xs opacity-75">— María G., Enfermera SCS</p>
+                </div>
+            </div>
+            <div class="md:w-1/2 p-10 bg-white dark:bg-slate-900">
+                <div class="flex justify-end mb-4">
+                    <button onclick="hideSubscriptionModal()" class="text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+                </div>
+                <div class="grid gap-4">
+                    <div class="border-2 border-gray-100 dark:border-slate-800 p-6 rounded-3xl hover:border-blue-500 transition-all cursor-pointer group">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-bold text-lg">Plan Mensual</span>
+                            <span class="text-blue-600 font-black text-xl">1,99€</span>
+                        </div>
+                        <p class="text-xs text-gray-500">Facturación cada mes. Cancela cuando quieras.</p>
+                        <button onclick="checkout('mensual')" class="mt-4 w-full py-2 bg-gray-900 dark:bg-blue-600 text-white rounded-xl text-sm font-bold group-hover:bg-blue-600">Elegir Mensual</button>
+                    </div>
+                    <div class="border-2 border-blue-500 p-6 rounded-3xl bg-blue-50/50 dark:bg-blue-900/10 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 bg-blue-600 text-white px-3 py-1 text-[10px] font-black rounded-bl-xl uppercase">Más Ahorro (-16%)</div>
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-bold text-lg">Plan Anual</span>
+                            <span class="text-blue-600 font-black text-xl">19,99€</span>
+                        </div>
+                        <p class="text-xs text-gray-500">Un solo pago al año. Acceso total.</p>
+                        <button onclick="checkout('anual')" class="mt-4 w-full py-2 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700">Elegir Anual</button>
+                    </div>
+                </div>
+                <p class="mt-6 text-center text-[10px] text-gray-400 uppercase font-bold tracking-widest">Pago seguro vía Stripe <i class="fab fa-stripe text-2xl align-middle ml-1"></i></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ALERTS PANEL -->
+    <div id="alerts-panel" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-xl rounded-3xl shadow-2xl p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-black flex items-center gap-3">
+                    <i class="fas fa-bell text-blue-600"></i> Mis Alertas Email
+                </h3>
+                <button onclick="hideAlertsPanel()" class="text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Tu Correo Electrónico</label>
+                    <input type="email" placeholder="ejemplo@correo.com" class="w-full p-4 rounded-xl bg-gray-50 dark:bg-slate-800 border-0 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Categorías Profesionales</label>
+                    <div class="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                        <!-- Categories -->
+                        <label class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-slate-800 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/10 border border-transparent hover:border-blue-200">
+                            <input type="checkbox" class="w-4 h-4 rounded text-blue-600"> <span class="text-sm">Enfermera/o</span>
+                        </label>
+                        <label class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-slate-800 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/10 border border-transparent hover:border-blue-200">
+                            <input type="checkbox" class="w-4 h-4 rounded text-blue-600"> <span class="text-sm">Médico</span>
+                        </label>
+                        <label class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-slate-800 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/10 border border-transparent hover:border-blue-200">
+                            <input type="checkbox" class="w-4 h-4 rounded text-blue-600"> <span class="text-sm">TCAE</span>
+                        </label>
+                        <label class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-slate-800 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/10 border border-transparent hover:border-blue-200">
+                            <input type="checkbox" class="w-4 h-4 rounded text-blue-600"> <span class="text-sm">Celador/a</span>
+                        </label>
+                        <label class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-slate-800 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/10 border border-transparent hover:border-blue-200">
+                            <input type="checkbox" class="w-4 h-4 rounded text-blue-600"> <span class="text-sm">Administrativo/a</span>
+                        </label>
+                        <label class="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-slate-800 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/10 border border-transparent hover:border-blue-200">
+                            <input type="checkbox" class="w-4 h-4 rounded text-blue-600"> <span class="text-sm">Fisioterapeuta</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="p-4 rounded-xl bg-orange-50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-900 flex items-start gap-4">
+                    <i class="fas fa-crown text-orange-500 mt-1"></i>
+                    <div>
+                        <p class="text-xs font-bold text-orange-800 dark:text-orange-400">Exclusivo Plan Pro</p>
+                        <p class="text-[10px] text-orange-700 dark:text-orange-500">Las alertas instantáneas requieren una suscripción activa.</p>
+                    </div>
+                </div>
+
+                <button class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all">Guardar Configuración</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GEMINI STUDY ASSISTANT MODAL -->
+    <div id="study-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] hidden items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl shadow-2xl p-8 relative border border-purple-100 dark:border-purple-900">
+             <!-- Background decoration -->
+            <div class="absolute top-0 right-0 w-32 h-32 bg-purple-200 dark:bg-purple-900/30 rounded-full blur-3xl -z-10"></div>
+
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-black flex items-center gap-3 text-slate-800 dark:text-white">
+                    <i class="fas fa-brain text-purple-600"></i> Asistente de Estudio <span class="text-xs bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-300 px-2 py-1 rounded-full">BETA</span>
+                </h3>
+                <button onclick="closeStudyAssistant()" class="text-gray-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
+            </div>
+
+            <p class="text-gray-600 dark:text-gray-300 mb-6">Genera preguntas tipo test de examen sobre cualquier temario sanitario para practicar.</p>
+            
+            <div class="flex gap-2 mb-6">
+                <input type="text" id="study-topic" placeholder="Ej: Ley General de Sanidad, RCP Básica, Calendario Vacunal..." 
+                    class="flex-1 p-4 rounded-xl bg-gray-50 dark:bg-slate-800 border-2 border-transparent focus:border-purple-500 outline-none transition-colors"
+                    onkeypress="if(event.key === 'Enter') generateQuestion()">
+                <button onclick="generateQuestion()" id="generate-btn" class="px-6 py-4 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-all shadow-lg shadow-purple-500/20 whitespace-nowrap">
+                    Generar Pregunta ✨
+                </button>
+            </div>
+
+            <!-- Quiz Container -->
+            <div id="quiz-container" class="hidden space-y-4">
+                <div class="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-gray-100 dark:border-slate-700">
+                    <h4 id="quiz-question" class="text-lg font-bold mb-4 leading-relaxed">¿...?</h4>
+                    <div id="quiz-options" class="space-y-3">
+                        <!-- Options injected here -->
+                    </div>
+                </div>
+                
+                <div id="quiz-explanation-box" class="hidden p-5 bg-green-50 dark:bg-green-900/10 border border-green-100 dark:border-green-900 rounded-xl animate-in fade-in slide-in-from-top-2">
+                    <h5 class="font-bold text-green-800 dark:text-green-400 mb-1 flex items-center gap-2"><i class="fas fa-check-circle"></i> Explicación Correcta</h5>
+                    <p id="quiz-explanation" class="text-sm text-green-700 dark:text-green-300 leading-relaxed"></p>
+                </div>
+            </div>
+
+            <div id="quiz-loading" class="hidden py-12 flex-col items-center justify-center text-center">
+                <div class="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mb-4"></div>
+                <p class="text-purple-600 font-medium animate-pulse">Gemini está redactando tu pregunta...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIG ---
+        // IMPORTANTE: En este entorno de prueba (Canvas), la variable apiKey se deja vacía 
+        // y el sistema la inyecta automáticamente.
+        // Si descargas este archivo para usarlo en tu propio servidor/PC, debes pegar 
+        // tu propia API Key de Google AI Studio aquí:
+        const apiKey = ""; 
+
+        // --- DATA & STATE ---
+        const MOCK_DATA = [
+            // Estabilización 2022
+            { id: 101, tab: 'estabilizacion2022', category: 'SCS', title: "Resolución Listas Definitivas Estabilización Celadores", date: "2025-10-12", excerpt: "Publicada la relación definitiva de personas aspirantes que superan el concurso-oposición extraordinario.", status: "nuevo", link: "#" },
+            { id: 102, tab: 'estabilizacion2022', category: 'BOC', title: "BOC: Nombramiento Personal Estatutario Auxiliar Enfermería", date: "2025-10-10", excerpt: "Nombramiento como personal estatutario fijo de los aspirantes que han superado el proceso de estabilización 2022.", status: "actualizado", link: "#" },
+            
+            // Convocatoria 2025
+            { id: 201, tab: 'convocatoria2025', category: 'SCS', title: "Publicación Temarios Oficiales OPE 2025", date: "2025-11-01", excerpt: "Ya se pueden consultar los temarios actualizados para todas las categorías técnicas superiores de la OPE 2025.", status: "nuevo", link: "#" },
+            { id: 202, tab: 'convocatoria2025', category: 'BOC', title: "Convocatoria 50 plazas Técnico Superior Laboratorio", date: "2025-11-05", excerpt: "Anuncio oficial en el BOC del proceso selectivo para ingreso por el sistema de acceso libre.", status: "urgente", link: "#" },
+
+            // Supletorias
+            { id: 301, tab: 'supletorias', category: 'SCS', title: "Apertura Lista Supletoria: Enfermería Quirúrgica", date: "2025-12-20", excerpt: "Se abre el plazo para la inscripción en las listas supletorias ante la falta de personal disponible en bolsa.", status: "nuevo", link: "#" },
+            { id: 302, tab: 'supletorias', category: 'SCS', title: "Listas Provisionales Auxiliar Administrativo - Gerencia Dr. Negrín", date: "2025-12-18", excerpt: "Consulta el listado provisional de admitidos y excluidos para la lista de empleo temporal.", status: "normal", link: "#" },
+
+            // Traslados
+            { id: 401, tab: 'traslados', category: 'BOC', title: "BOC: Concurso de Traslado Voluntario Fisioterapeutas", date: "2025-09-30", excerpt: "Convocatoria para la movilidad voluntaria de personal estatutario fijo en centros de salud de La Palma.", status: "normal", link: "#" },
+            { id: 402, tab: 'traslados', category: 'SCS', title: "Adjudicación Provisional Destinos Traslado Médico Familia", date: "2025-11-15", excerpt: "Publicada la propuesta de adjudicación de plazas para el concurso de traslados 2024-2025.", status: "actualizado", link: "#" },
+
+            // Otras
+            { id: 501, tab: 'otras', category: 'GOOGLE', title: "Bolsa externa de Técnicos Informáticos para el SCS", date: "2025-12-05", excerpt: "Convenio con universidades canarias para la captación de talento en el área de sistemas de información.", status: "nuevo", link: "#" }
+        ];
+
+        let state = {
+            currentTab: 'noticias',
+            searchQuery: '',
+            filterCategory: 'all',
+            isPremium: false,
+            consultationsToday: 0,
+            viewedIds: []
+        };
+
+        // --- GEMINI API HELPERS ---
+
+        async function callGeminiAPI(payload) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const delays = [1000, 2000, 4000, 8000, 16000];
+
+            for (let i = 0; i < delays.length; i++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    
+                    const data = await response.json();
+                    return data;
+                } catch (error) {
+                    if (i === delays.length - 1) throw error;
+                    await new Promise(resolve => setTimeout(resolve, delays[i]));
+                }
+            }
+        }
+
+        // --- FEATURE: AI SUMMARY ---
+
+        async function summarizePost(id, title) {
+            const container = document.getElementById(`summary-${id}`);
+            const btn = document.getElementById(`btn-summary-${id}`);
+            
+            // Toggle visibility if already loaded
+            if (container.innerHTML !== '' && !container.classList.contains('hidden')) {
+                container.classList.add('hidden');
+                return;
+            }
+            container.classList.remove('hidden');
+
+            // Show Loading
+            container.innerHTML = `
+                <div class="flex items-center gap-3 text-purple-600">
+                    <div class="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                    <span class="text-xs font-bold animate-pulse">Analizando documento...</span>
+                </div>
+            `;
+
+            try {
+                // In a real app, we would fetch the PDF content. Here we simulate based on title.
+                const prompt = `Eres un experto en empleo público sanitario en Canarias. Resume brevemente la siguiente noticia para un opositor, extrayendo plazos, requisitos o acciones a tomar en formato de lista (bullet points). Noticia: "${title}".`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }]
+                };
+
+                const data = await callGeminiAPI(payload);
+                const text = data.candidates[0].content.parts[0].text;
+
+                // Simple formatting conversion (markdown bold to html strong)
+                const formattedText = text
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\* /g, '<li>')
+                    .replace(/\n/g, '<br>');
+
+                container.innerHTML = `
+                    <div class="ai-content">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-[10px] font-bold text-purple-600 uppercase tracking-widest">Resumen Gemini</span>
+                            <i class="fas fa-sparkles text-purple-400"></i>
+                        </div>
+                        <div class="text-slate-700 dark:text-slate-300 leading-relaxed text-xs">
+                            ${formattedText}
+                        </div>
+                    </div>
+                `;
+            } catch (err) {
+                container.innerHTML = `<p class="text-red-500 text-xs">Error al generar resumen. Inténtalo de nuevo.</p>`;
+                console.error(err);
+            }
+        }
+
+        // --- FEATURE: AI STUDY ASSISTANT ---
+
+        let currentQuizAnswer = null;
+
+        function openStudyAssistant() {
+            document.getElementById('study-modal').classList.remove('hidden');
+            document.getElementById('study-modal').classList.add('flex');
+            document.getElementById('study-topic').focus();
+        }
+
+        function closeStudyAssistant() {
+            document.getElementById('study-modal').classList.add('hidden');
+            document.getElementById('study-modal').classList.remove('flex');
+        }
+
+        async function generateQuestion() {
+            const topic = document.getElementById('study-topic').value;
+            if(!topic) return;
+
+            // UI State
+            document.getElementById('quiz-container').classList.add('hidden');
+            document.getElementById('quiz-loading').classList.remove('hidden');
+            document.getElementById('quiz-loading').classList.add('flex');
+            document.getElementById('generate-btn').disabled = true;
+            document.getElementById('generate-btn').classList.add('opacity-50');
+
+            try {
+                const prompt = `Eres un preparador de oposiciones de sanidad. Genera una pregunta de tipo test difícil sobre el tema: '${topic}'. 
+                Responde EXCLUSIVAMENTE con un objeto JSON válido con este esquema:
+                {
+                    "question": "Texto de la pregunta",
+                    "options": ["Opción A", "Opción B", "Opción C", "Opción D"],
+                    "correctIndex": 0,
+                    "explanation": "Explicación detallada de por qué es correcta."
+                }`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { responseMimeType: "application/json" }
+                };
+
+                const data = await callGeminiAPI(payload);
+                
+                // ROBUST PARSING FIX:
+                // Gemini sometimes returns markdown blocks (```json ... ```) even when asked not to.
+                // We must clean the string before parsing.
+                let rawText = data.candidates[0].content.parts[0].text;
+                rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+                const result = JSON.parse(rawText);
+                
+                renderQuiz(result);
+
+            } catch (err) {
+                alert("Hubo un error generando la pregunta. Por favor intenta otro tema.");
+                console.error(err);
+                document.getElementById('quiz-loading').classList.add('hidden');
+                document.getElementById('quiz-loading').classList.remove('flex');
+            } finally {
+                document.getElementById('generate-btn').disabled = false;
+                document.getElementById('generate-btn').classList.remove('opacity-50');
+            }
+        }
+
+        function renderQuiz(data) {
+            document.getElementById('quiz-loading').classList.add('hidden');
+            document.getElementById('quiz-loading').classList.remove('flex');
+            document.getElementById('quiz-container').classList.remove('hidden');
+            document.getElementById('quiz-explanation-box').classList.add('hidden');
+
+            document.getElementById('quiz-question').innerText = data.question;
+            currentQuizAnswer = data;
+
+            const optsDiv = document.getElementById('quiz-options');
+            optsDiv.innerHTML = '';
+
+            data.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-4 rounded-xl border border-gray-200 dark:border-slate-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 transition-all text-sm font-medium option-btn";
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(index, btn);
+                optsDiv.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selectedIndex, btnElement) {
+            const buttons = document.querySelectorAll('.option-btn');
+            buttons.forEach(b => b.disabled = true); // Disable all
+
+            if (selectedIndex === currentQuizAnswer.correctIndex) {
+                btnElement.classList.add('bg-green-100', 'border-green-500', 'text-green-800', 'dark:bg-green-900', 'dark:text-green-100');
+                btnElement.innerHTML += ' <i class="fas fa-check float-right mt-1"></i>';
+            } else {
+                btnElement.classList.add('bg-red-100', 'border-red-500', 'text-red-800', 'dark:bg-red-900', 'dark:text-red-100');
+                btnElement.innerHTML += ' <i class="fas fa-times float-right mt-1"></i>';
+                
+                // Highlight correct
+                const correctBtn = buttons[currentQuizAnswer.correctIndex];
+                correctBtn.classList.add('bg-green-50', 'border-green-500', 'dark:bg-green-900/30');
+                correctBtn.innerHTML += ' <i class="fas fa-check float-right mt-1 opacity-50"></i>';
+            }
+
+            // Show explanation
+            const expBox = document.getElementById('quiz-explanation-box');
+            document.getElementById('quiz-explanation').innerText = currentQuizAnswer.explanation;
+            expBox.classList.remove('hidden');
+        }
+
+        // --- CORE FUNCTIONS ---
+
+        function init() {
+            loadState();
+            renderPosts();
+            updateUI();
+            updateCounts();
+        }
+
+        function loadState() {
+            const saved = localStorage.getItem('scs_empleo_state');
+            const today = new Date().toDateString();
+            
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (parsed.lastVisit === today) {
+                    state.consultationsToday = parsed.count || 0;
+                    state.viewedIds = parsed.viewedIds || [];
+                }
+                state.isPremium = parsed.isPremium || false;
+            }
+            state.lastVisit = today;
+        }
+
+        function saveState() {
+            localStorage.setItem('scs_empleo_state', JSON.stringify({
+                lastVisit: state.lastVisit,
+                count: state.consultationsToday,
+                viewedIds: state.viewedIds,
+                isPremium: state.isPremium
+            }));
+        }
+
+        function renderPosts() {
+            const grid = document.getElementById('posts-grid');
+            let filtered = MOCK_DATA.filter(item => {
+                const matchesTab = state.currentTab === 'noticias' ? true : item.tab === state.currentTab;
+                const matchesSearch = item.title.toLowerCase().includes(state.searchQuery) || item.excerpt.toLowerCase().includes(state.searchQuery);
+                const matchesCat = state.filterCategory === 'all' ? true : item.category === state.filterCategory;
+                return matchesTab && matchesSearch && matchesCat;
+            }).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            grid.innerHTML = '';
+            filtered.forEach(post => {
+                const card = createCard(post);
+                grid.appendChild(card);
+            });
+        }
+
+        function createCard(post) {
+            const div = document.createElement('div');
+            const isLocked = !state.isPremium && state.consultationsToday >= 1 && !state.viewedIds.includes(post.id);
+            
+            div.className = "glass-card p-6 rounded-[2rem] flex flex-col h-full hover:shadow-2xl transition-all duration-500 relative group";
+            
+            const meta = {
+                'SCS': { color: 'blue', label: 'Oficial SCS', icon: 'fa-hospital' },
+                'BOC': { color: 'purple', label: 'BOC', icon: 'fa-file-signature' },
+                'GOOGLE': { color: 'orange', label: 'Noticias', icon: 'fa-globe' }
+            }[post.category];
+
+            // AI Feature Button added in the footer of the card
+            const aiButton = isLocked ? '' : `
+                <button id="btn-summary-${post.id}" onclick="event.stopPropagation(); summarizePost(${post.id}, '${post.title}')" 
+                    class="mt-4 w-full py-2 bg-purple-50 dark:bg-purple-900/10 text-purple-600 dark:text-purple-300 rounded-lg text-xs font-bold border border-purple-100 dark:border-purple-900 hover:bg-purple-100 transition-colors flex items-center justify-center gap-2">
+                    <i class="fas fa-magic"></i> Resumir con IA ✨
+                </button>
+                <div id="summary-${post.id}" class="hidden mt-3 p-3 bg-white dark:bg-slate-800 rounded-lg border border-purple-100 dark:border-slate-700 shadow-sm"></div>
+            `;
+
+            div.innerHTML = `
+                <div class="${isLocked ? 'paywall-blur' : ''} flex-1 flex flex-col">
+                    <div class="flex justify-between items-start mb-5">
+                        <span class="text-[10px] font-black uppercase tracking-[0.2em] text-${meta.color}-600">
+                            <i class="fas ${meta.icon} mr-1"></i> ${meta.label}
+                        </span>
+                        <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase ${getStatusStyle(post.status)}">
+                            ${post.status}
+                        </span>
+                    </div>
+                    <h3 class="text-xl font-black leading-tight mb-4 group-hover:text-blue-600 transition-colors">${post.title}</h3>
+                    <p class="text-gray-500 dark:text-gray-400 text-sm mb-4 flex-1">${post.excerpt}</p>
+                    
+                    ${aiButton}
+
+                    <div class="flex items-center justify-between pt-6 mt-2 border-t border-gray-100 dark:border-slate-800">
+                        <span class="text-xs font-bold text-gray-400"><i class="far fa-calendar-alt mr-1"></i> ${new Date(post.date).toLocaleDateString()}</span>
+                        <button onclick="viewPost(${post.id})" class="px-5 py-2.5 bg-gray-900 dark:bg-blue-600 text-white rounded-xl text-xs font-bold hover:scale-105 transition-transform">Ver PDF</button>
+                    </div>
+                </div>
+                ${isLocked ? `
+                    <div class="absolute inset-0 z-10 flex flex-col items-center justify-center p-6 text-center">
+                        <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg mb-3">
+                            <i class="fas fa-lock text-blue-600"></i>
+                        </div>
+                        <p class="text-xs font-bold mb-3">Contenido Premium</p>
+                        <button onclick="showSubscriptionModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-[10px] font-black uppercase tracking-wider">Desbloquear ahora</button>
+                    </div>
+                ` : ''}
+            `;
+            return div;
+        }
+
+        function getStatusStyle(s) {
+            return {
+                'nuevo': 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+                'urgente': 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+                'actualizado': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+            }[s] || 'bg-gray-100 text-gray-600 dark:bg-slate-800 dark:text-gray-400';
+        }
+
+        function viewPost(id) {
+            if (state.isPremium || state.viewedIds.includes(id)) {
+                const p = MOCK_DATA.find(x => x.id === id);
+                if(p.link !== '#') window.open(p.link, '_blank');
+                else alert("Funcionalidad de visualización de PDF abierta.");
+            } else {
+                if (state.consultationsToday < 1) {
+                    state.consultationsToday++;
+                    state.viewedIds.push(id);
+                    saveState();
+                    updateUI();
+                    renderPosts();
+                    const p = MOCK_DATA.find(x => x.id === id);
+                    if(p.link !== '#') window.open(p.link, '_blank');
+                } else {
+                    document.getElementById('paywall-container').classList.remove('hidden');
+                }
+            }
+        }
+
+        // --- UI UPDATES ---
+
+        function updateUI() {
+            const countText = state.isPremium ? "ILIMITADO" : `${state.consultationsToday}/1`;
+            document.getElementById('daily-counter').innerText = countText;
+            const progress = state.isPremium ? 100 : (state.consultationsToday / 1) * 100;
+            document.getElementById('counter-progress').style.width = `${progress}%`;
+        }
+
+        function updateCounts() {
+            ['estabilizacion2022', 'convocatoria2025', 'supletorias', 'traslados', 'otras'].forEach(tab => {
+                const count = MOCK_DATA.filter(x => x.tab === tab).length;
+                const el = document.getElementById(`count-${tab}`);
+                if(el) el.innerText = count;
+            });
+        }
+
+        function switchTab(tabId) {
+            state.currentTab = tabId;
+            document.querySelectorAll('.sidebar-link').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tabId);
+            });
+
+            const titles = {
+                'noticias': 'Novedades SCS',
+                'estabilizacion2022': 'OPE Estabilización 2022',
+                'convocatoria2025': 'Convocatoria 2025',
+                'supletorias': 'Listas Supletorias',
+                'traslados': 'Concurso de Traslado',
+                'otras': 'Otras Convocatorias'
+            };
+            document.getElementById('view-title').innerText = titles[tabId];
+            
+            const filterBar = document.getElementById('filter-container');
+            filterBar.classList.toggle('hidden', tabId !== 'noticias');
+
+            renderPosts();
+            if(window.innerWidth < 1024) toggleSidebar();
+        }
+
+        function handleSearch(v) {
+            state.searchQuery = v.toLowerCase();
+            renderPosts();
+        }
+
+        function filterByCategory(cat) {
+            state.filterCategory = cat;
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-blue-600', 'text-white');
+                btn.classList.add('bg-white', 'dark:bg-slate-800', 'border');
+            });
+            event.target.classList.add('active', 'bg-blue-600', 'text-white');
+            event.target.classList.remove('bg-white', 'dark:bg-slate-800', 'border');
+            renderPosts();
+        }
+
+        // --- MODAL & FLOW CONTROLS ---
+
+        function showSubscriptionModal() {
+            document.getElementById('subscription-modal').classList.remove('hidden');
+            document.getElementById('subscription-modal').classList.add('flex');
+        }
+
+        function hideSubscriptionModal() {
+            document.getElementById('subscription-modal').classList.add('hidden');
+            document.getElementById('subscription-modal').classList.remove('flex');
+        }
+
+        function closePaywall() {
+            document.getElementById('paywall-container').classList.add('hidden');
+        }
+
+        function showAlertsPanel() {
+            document.getElementById('alerts-panel').classList.remove('hidden');
+            document.getElementById('alerts-panel').classList.add('flex');
+        }
+
+        function hideAlertsPanel() {
+            document.getElementById('alerts-panel').classList.add('hidden');
+            document.getElementById('alerts-panel').classList.remove('flex');
+        }
+
+        function checkout(plan) {
+            alert(`Conectando con Stripe para el plan ${plan}...`);
+            // Simulación de éxito
+            state.isPremium = true;
+            saveState();
+            hideSubscriptionModal();
+            closePaywall();
+            updateUI();
+            renderPosts();
+        }
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
